@@ -39,13 +39,24 @@
             font-size: 24px;
             border-radius: 10px;
         }
+        #playerNameInput {
+            margin-top: 10px;
+            display: none;
+        }
     </style>
 </head>
 <body>
     <canvas id="gameCanvas"></canvas>
     <div id="score">Score: 0</div>
-    <div id="bestScore">Best Score: 0</div>
-    <div id="gameOver">Game Over! Press "R" to Restart</div>
+    <div id="bestScore">Best Score: 0 by: ---</div>
+    <div id="gameOver">
+        Game Over! Press "R" to Restart
+        <div id="playerNameInput">
+            <label for="playerName">Enter your name: </label>
+            <input type="text" id="playerName" placeholder="Your name">
+            <button id="saveNameButton">Save</button>
+        </div>
+    </div>
 
     <script>
         const canvas = document.getElementById("gameCanvas");
@@ -53,6 +64,9 @@
         const scoreDisplay = document.getElementById("score");
         const bestScoreDisplay = document.getElementById("bestScore");
         const gameOverScreen = document.getElementById("gameOver");
+        const playerNameInputDiv = document.getElementById("playerNameInput");
+        const playerNameInput = document.getElementById("playerName");
+        const saveNameButton = document.getElementById("saveNameButton");
 
         canvas.width = 1000;
         canvas.height = 500;
@@ -61,6 +75,7 @@
         let blocks = [];
         let score = 0;
         let bestScore = 0;
+        let bestPlayer = "---";
         let gameOver = false;
         let moveLeft = false;
         let moveRight = false;
@@ -107,10 +122,21 @@
         function endGame() {
             gameOver = true;
             gameOverScreen.style.display = "block";
+            playerNameInputDiv.style.display = "block";
+
             if (score > bestScore) {
                 bestScore = score;
-                bestScoreDisplay.textContent = `Best Score: ${bestScore}`;
+                bestScoreDisplay.textContent = `Best Score: ${bestScore} by: ---`;
             }
+        }
+
+        function savePlayerName() {
+            const playerName = playerNameInput.value.trim();
+            if (playerName && score === bestScore) {
+                bestPlayer = playerName;
+                bestScoreDisplay.textContent = `Best Score: ${bestScore} by: ${bestPlayer}`;
+            }
+            playerNameInputDiv.style.display = "none";
         }
 
         function resetGame() {
@@ -120,6 +146,7 @@
             player.x = canvas.width / 2 - 15;
             scoreDisplay.textContent = `Score: ${score}`;
             gameOverScreen.style.display = "none";
+            playerNameInputDiv.style.display = "none";
             gameLoop();
         }
 
@@ -148,6 +175,8 @@
             if (event.code === "ArrowLeft") moveLeft = false;
             if (event.code === "ArrowRight") moveRight = false;
         });
+
+        saveNameButton.addEventListener("click", savePlayerName);
 
         gameLoop();
     </script>
