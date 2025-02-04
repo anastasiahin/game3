@@ -17,15 +17,12 @@
             background-color: white;
             margin: auto;
         }
-        #score, #bestScore {
+        #score {
             position: absolute;
             top: 10px;
             left: 10px;
             font-size: 20px;
             font-weight: bold;
-        }
-        #bestScore {
-            top: 40px;
         }
         #gameOver {
             display: none;
@@ -43,30 +40,43 @@
             margin-top: 10px;
             display: none;
         }
+        #leaderboard {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 18px;
+        }
     </style>
 </head>
 <body>
     <canvas id="gameCanvas"></canvas>
     <div id="score">Score: 0</div>
-    <div id="bestScore">Best Score: 0 by: ---</div>
     <div id="gameOver">
-        Game Over! Press "R" to Restart
+        Game Over! Press "Enter" to Restart
         <div id="playerNameInput">
             <label for="playerName">Enter your name: </label>
             <input type="text" id="playerName" placeholder="Your name">
             <button id="saveNameButton">Save</button>
         </div>
     </div>
+    <div id="leaderboard">
+        <h3>Leaderboard</h3>
+        <ol id="leaderboardList"></ol>
+    </div>
 
     <script>
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
         const scoreDisplay = document.getElementById("score");
-        const bestScoreDisplay = document.getElementById("bestScore");
         const gameOverScreen = document.getElementById("gameOver");
         const playerNameInputDiv = document.getElementById("playerNameInput");
         const playerNameInput = document.getElementById("playerName");
         const saveNameButton = document.getElementById("saveNameButton");
+        const leaderboardList = document.getElementById("leaderboardList");
 
         canvas.width = 800;
         canvas.height = 600;
@@ -74,11 +84,28 @@
         let player = { x: canvas.width / 2 - 15, y: canvas.height - 50, width: 30, height: 30, color: "purple" };
         let blocks = [];
         let score = 0;
-        let bestScore = 0;
-        let bestPlayer = "---";
         let gameOver = false;
         let moveLeft = false;
         let moveRight = false;
+
+        function loadLeaderboard() {
+            const leaderboard = JSON.parse(localStorage.getItem("leaderboard")) || [];
+            leaderboardList.innerHTML = "";
+            leaderboard.forEach(entry => {
+                const li = document.createElement("li");
+                li.textContent = `${entry.name}: ${entry.score}`;
+                leaderboardList.appendChild(li);
+            });
+        }
+
+        function saveToLeaderboard(name, score) {
+            let leaderboard = JSON.parse(localStorage.getItem("leaderboard")) || [];
+            leaderboard.push({ name, score });
+            leaderboard.sort((a, b) => b.score - a.score);
+            leaderboard = leaderboard.slice(0, 5); 
+            localStorage.setItem("leaderboard", JSON.stringify(leaderboard));
+            loadLeaderboard();
+        }
 
         function drawPlayer() {
             ctx.fillStyle = player.color;
@@ -123,19 +150,14 @@
             gameOver = true;
             gameOverScreen.style.display = "block";
             playerNameInputDiv.style.display = "block";
-
-            if (score > bestScore) {
-                bestScore = score;
-                bestScoreDisplay.textContent = `Best Score: ${bestScore} by: ---`;
-            }
         }
 
         function savePlayerName() {
             const playerName = playerNameInput.value.trim();
-            if (playerName && score === bestScore) {
-                bestPlayer = playerName;
-                bestScoreDisplay.textContent = `Best Score: ${bestScore} by: ${bestPlayer}`;
+            if (playerName) {
+                saveToLeaderboard(playerName, score);
             }
+            playerNameInput.value = "";
             playerNameInputDiv.style.display = "none";
         }
 
@@ -168,7 +190,7 @@
         document.addEventListener("keydown", event => {
             if (event.code === "ArrowLeft") moveLeft = true;
             if (event.code === "ArrowRight") moveRight = true;
-            if (gameOver && event.code === "KeyR") resetGame();
+            if (gameOver && event.code === "Enter") resetGame();
         });
 
         document.addEventListener("keyup", event => {
@@ -177,7 +199,7 @@
         });
 
         saveNameButton.addEventListener("click", savePlayerName);
-
+        loadLeaderboard();
         gameLoop();
     </script>
 </body>
