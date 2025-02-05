@@ -55,6 +55,6 @@ app.get("/leaderboard", async (req, res) => {
 });
 
 const PORT = 5000;
-app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Сервер працює на http://0.0.0.0:${PORT}`);
+app.listen(PORT, "192.168.215.53", () => {
+    console.log(`Сервер працює на http://http://192.168.215.53:5000${PORT}`);
 });
