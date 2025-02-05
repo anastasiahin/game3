@@ -58,14 +58,23 @@
             padding-left: 15px;
             margin: 5px 0 0 0;
         }
+        #saveMessage {
+            display: none;
+            position: absolute;
+            top: 80px;
+            left: 10px;
+            background: green;
+            color: white;
+            padding: 5px;
+            border-radius: 5px;
+        }
     </style>
 </head>
 <body>
-    <div id="saveMessage" style="display: none; position: absolute; top: 80px; left: 10px; background: green; color: white; padding: 5px; border-radius: 5px;">
-    Score saved!
-</div>
+    <div id="saveMessage">Score saved!</div>
     <canvas id="gameCanvas"></canvas>
     <div id="score">Score: 0</div>
+
     <div id="gameOver">
         Game Over! Press "Enter" to Restart
         <div id="playerNameInput">
@@ -74,6 +83,7 @@
             <button id="saveNameButton">Save</button>
         </div>
     </div>
+
     <div id="leaderboard">
         <h3>Leaderboard</h3>
         <ol id="leaderboardList"></ol>
@@ -88,6 +98,7 @@
         const playerNameInput = document.getElementById("playerName");
         const saveNameButton = document.getElementById("saveNameButton");
         const leaderboardList = document.getElementById("leaderboardList");
+        const saveMessage = document.getElementById("saveMessage");
 
         canvas.width = 800;
         canvas.height = 600;
@@ -116,6 +127,13 @@
             leaderboard = leaderboard.slice(0, 5); 
             localStorage.setItem("leaderboard", JSON.stringify(leaderboard));
             loadLeaderboard();
+        }
+
+        function showSaveMessage() {
+            saveMessage.style.display = "block";
+            setTimeout(() => {
+                saveMessage.style.display = "none";
+            }, 2000);
         }
 
         function drawPlayer() {
@@ -165,9 +183,12 @@
 
         function savePlayerName() {
             const playerName = playerNameInput.value.trim();
-            if (playerName) {
-                saveToLeaderboard(playerName, score);
+            if (!playerName) {
+                alert("Please enter your name!");
+                return;
             }
+            saveToLeaderboard(playerName, score);
+            showSaveMessage();
             playerNameInput.value = "";
             playerNameInputDiv.style.display = "none";
         }
