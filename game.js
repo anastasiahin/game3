@@ -1,4 +1,4 @@
-const SERVER_URL = "http://192.168.215.53:5000"; // Замініть на ваш реальний сервер
+const SERVER_URL = "http://localhost:5000/leaderboard"; // Замініть на ваш реальний сервер
 
 async function submitScore(name, score) {
     try {
