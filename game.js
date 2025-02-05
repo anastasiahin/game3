@@ -1,4 +1,4 @@
-const SERVER_URL = "http://localhost:5000"; // Заміни на свій сервер
+const SERVER_URL = "http://localhost:5000"; // Замініть на ваш реальний сервер
 
 async function submitScore(name, score) {
     try {
@@ -7,7 +7,16 @@ async function submitScore(name, score) {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ name, score }),
         });
-        updateLeaderboard();
+
+        updateLeaderboard(); // Оновлюємо лідерборд після надсилання
+
+        // Показуємо повідомлення про успішне збереження
+        const saveMessage = document.getElementById("saveMessage");
+        saveMessage.style.display = "block";
+        setTimeout(() => {
+            saveMessage.style.display = "none";
+        }, 2000);
+        
     } catch (error) {
         console.error("Помилка надсилання результату:", error);
     }
@@ -24,30 +33,28 @@ async function updateLeaderboard() {
 }
 
 function displayLeaderboard(leaderboard) {
-    const leaderboardDiv = document.getElementById("leaderboard");
-    leaderboardDiv.innerHTML = "<b>🏆 Топ-10 гравців:</b><br>";
+    const leaderboardList = document.getElementById("leaderboardList");
+    leaderboardList.innerHTML = ""; // Очищаємо лише список, залишаючи заголовок
 
     leaderboard.forEach((player, index) => {
-        leaderboardDiv.innerHTML += `${index + 1}. ${player.name} - ${player.score}<br>`;
+        const li = document.createElement("li");
+        li.textContent = `${index + 1}. ${player.name} - ${player.score}`;
+        leaderboardList.appendChild(li);
     });
 }
 
-// Викликаємо оновлення лідерборду на старті
+// Викликаємо оновлення лідерборду при завантаженні сторінки
 updateLeaderboard();
 
-// Змінюємо кінець гри, щоб зберігати результат
 function endGame() {
     gameOver = true;
     gameOverScreen.style.display = "block";
     playerNameInputDiv.style.display = "block";
 }
 
-// При натисканні Enter відправляємо результат
-document.addEventListener("keydown", event => {
-    if (gameOver && event.code === "Enter") {
-        const name = playerNameInput.value.trim() || "Anonymous";
-        submitScore(name, score);
-        resetGame();
-    }
+// Збереження результату після введення імені
+saveNameButton.addEventListener("click", async () => {
+    const name = playerNameInput.value.trim() || "Anonymous";
+    await submitScore(name, score); // Чекаємо, поки збережеться
+    resetGame(); // Потім перезапускаємо гру
 });
-
