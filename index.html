@@ -90,7 +90,7 @@
     </div>
 
     <script>
-        const SERVER_URL = "http://localhost:5000"; // Заміни на свій сервер
+        const SERVER_URL = "http://localhost:5000"; // Замініть на свій сервер
 
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
@@ -100,6 +100,7 @@
         const playerNameInput = document.getElementById("playerName");
         const saveMessage = document.getElementById("saveMessage");
         const leaderboardList = document.getElementById("leaderboardList");
+        const saveNameButton = document.getElementById("saveNameButton");
 
         canvas.width = 800;
         canvas.height = 600;
@@ -110,6 +111,62 @@
         let gameOver = false;
         let moveLeft = false;
         let moveRight = false;
+
+        function drawPlayer() {
+            ctx.fillStyle = player.color;
+            ctx.fillRect(player.x, player.y, player.width, player.height);
+        }
+
+        function drawBlocks() {
+            ctx.fillStyle = "pink";
+            blocks.forEach(block => ctx.fillRect(block.x, block.y, block.size, block.size));
+        }
+
+        function updateBlocks() {
+            let spawnRate = 30 + (score / 10) * 5;
+            let blockSpeed = 3 + (score / 25);
+
+            if (Math.random() * 400 < spawnRate) {
+                blocks.push({ x: Math.random() * (canvas.width - 30), y: 0, size: 30 });
+            }
+
+            blocks.forEach(block => block.y += blockSpeed);
+
+            blocks = blocks.filter(block => {
+                if (block.y > canvas.height) {
+                    score++;
+                    scoreDisplay.textContent = `Score: ${score}`;
+                    return false;
+                }
+                return true;
+            });
+
+            blocks.forEach(block => {
+                if (player.x < block.x + block.size &&
+                    player.x + player.width > block.x &&
+                    player.y < block.y + block.size &&
+                    player.y + player.height > block.y) {
+                    endGame();
+                }
+            });
+        }
+
+        function endGame() {
+            gameOver = true;
+            gameOverScreen.style.display = "block";
+            playerNameInputDiv.style.display = "block";
+        }
+
+        function resetGame() {
+            gameOver = false;
+            blocks = [];
+            score = 0;
+            player.x = canvas.width / 2 - 15;
+            scoreDisplay.textContent = `Score: ${score}`;
+            gameOverScreen.style.display = "none";
+            playerNameInputDiv.style.display = "none";
+            gameLoop();
+        }
 
         async function loadLeaderboard() {
             try {
@@ -134,7 +191,7 @@
                     body: JSON.stringify({ name, score }),
                 });
                 showSaveMessage();
-                loadLeaderboard(); // Оновлюємо таблицю після збереження
+                loadLeaderboard();
             } catch (error) {
                 console.error("Помилка надсилання результату:", error);
             }
@@ -167,15 +224,19 @@
             if (event.code === "ArrowRight") moveRight = false;
         });
 
-        function resetGame() {
-            gameOver = false;
-            blocks = [];
-            score = 0;
-            player.x = canvas.width / 2 - 15;
-            scoreDisplay.textContent = `Score: ${score}`;
-            gameOverScreen.style.display = "none";
-            playerNameInputDiv.style.display = "none";
-            gameLoop();
+        function gameLoop() {
+            if (gameOver) return;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (moveLeft && player.x > 0) player.x -= 6;
+            if (moveRight && player.x < canvas.width - player.width) player.x += 6;
+
+            drawPlayer();
+            updateBlocks();
+            drawBlocks();
+
+            requestAnimationFrame(gameLoop);
         }
 
         loadLeaderboard();
@@ -183,3 +244,4 @@
     </script>
 </body>
 </html>
+
