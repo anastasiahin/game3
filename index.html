@@ -90,15 +90,16 @@
     </div>
 
     <script>
+        const SERVER_URL = "http://localhost:5000"; // Заміни на свій сервер
+
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
         const scoreDisplay = document.getElementById("score");
         const gameOverScreen = document.getElementById("gameOver");
         const playerNameInputDiv = document.getElementById("playerNameInput");
         const playerNameInput = document.getElementById("playerName");
-        const saveNameButton = document.getElementById("saveNameButton");
-        const leaderboardList = document.getElementById("leaderboardList");
         const saveMessage = document.getElementById("saveMessage");
+        const leaderboardList = document.getElementById("leaderboardList");
 
         canvas.width = 800;
         canvas.height = 600;
@@ -110,114 +111,50 @@
         let moveLeft = false;
         let moveRight = false;
 
-        function loadLeaderboard() {
-            const leaderboard = JSON.parse(localStorage.getItem("leaderboard")) || [];
-            leaderboardList.innerHTML = "";
-            leaderboard.forEach(entry => {
-                const li = document.createElement("li");
-                li.textContent = `${entry.name}: ${entry.score}`;
-                leaderboardList.appendChild(li);
-            });
+        async function loadLeaderboard() {
+            try {
+                const response = await fetch(`${SERVER_URL}/leaderboard`);
+                const leaderboard = await response.json();
+                leaderboardList.innerHTML = "";
+                leaderboard.forEach((entry, index) => {
+                    const li = document.createElement("li");
+                    li.textContent = `${index + 1}. ${entry.name}: ${entry.score}`;
+                    leaderboardList.appendChild(li);
+                });
+            } catch (error) {
+                console.error("Помилка отримання лідерборду:", error);
+            }
         }
 
-        function saveToLeaderboard(name, score) {
-            let leaderboard = JSON.parse(localStorage.getItem("leaderboard")) || [];
-            leaderboard.push({ name, score });
-            leaderboard.sort((a, b) => b.score - a.score);
-            leaderboard = leaderboard.slice(0, 5); 
-            localStorage.setItem("leaderboard", JSON.stringify(leaderboard));
-            loadLeaderboard();
+        async function saveToLeaderboard(name, score) {
+            try {
+                await fetch(`${SERVER_URL}/leaderboard`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ name, score }),
+                });
+                showSaveMessage();
+                loadLeaderboard(); // Оновлюємо таблицю після збереження
+            } catch (error) {
+                console.error("Помилка надсилання результату:", error);
+            }
         }
 
         function showSaveMessage() {
             saveMessage.style.display = "block";
-            setTimeout(() => {
-                saveMessage.style.display = "none";
-            }, 2000);
+            setTimeout(() => saveMessage.style.display = "none", 2000);
         }
 
-        function drawPlayer() {
-            ctx.fillStyle = player.color;
-            ctx.fillRect(player.x, player.y, player.width, player.height);
-        }
-
-        function drawBlocks() {
-            ctx.fillStyle = "pink";
-            blocks.forEach(block => ctx.fillRect(block.x, block.y, block.size, block.size));
-        }
-
-        function updateBlocks() {
-            let spawnRate = 30 + (score / 10) * 5;
-            let blockSpeed = 3 + (score / 25);
-
-            if (Math.random() * 400 < spawnRate) {
-                blocks.push({ x: Math.random() * (canvas.width - 30), y: 0, size: 30 });
-            }
-
-            blocks.forEach(block => block.y += blockSpeed);
-
-            blocks = blocks.filter(block => {
-                if (block.y > canvas.height) {
-                    score++;
-                    scoreDisplay.textContent = `Score: ${score}`;
-                    return false;
-                }
-                return true;
-            });
-
-            blocks.forEach(block => {
-                if (player.x < block.x + block.size &&
-                    player.x + player.width > block.x &&
-                    player.y < block.y + block.size &&
-                    player.y + player.height > block.y) {
-                    endGame();
-                }
-            });
-        }
-
-        function endGame() {
-            gameOver = true;
-            gameOverScreen.style.display = "block";
-            playerNameInputDiv.style.display = "block";
-        }
-
-        function savePlayerName() {
+        saveNameButton.addEventListener("click", () => {
             const playerName = playerNameInput.value.trim();
-            if (!playerName) {
+            if (playerName) {
+                saveToLeaderboard(playerName, score);
+                playerNameInput.value = "";
+                playerNameInputDiv.style.display = "none";
+            } else {
                 alert("Please enter your name!");
-                return;
             }
-            saveToLeaderboard(playerName, score);
-            showSaveMessage();
-            playerNameInput.value = "";
-            playerNameInputDiv.style.display = "none";
-        }
-
-        function resetGame() {
-            gameOver = false;
-            blocks = [];
-            score = 0;
-            player.x = canvas.width / 2 - 15;
-            scoreDisplay.textContent = `Score: ${score}`;
-            gameOverScreen.style.display = "none";
-            playerNameInputDiv.style.display = "none";
-            gameLoop();
-        }
-
-        function gameLoop() {
-            if (gameOver) return;
-
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            if (moveLeft && player.x > 0) player.x -= 6;
-            if (moveRight && player.x < canvas.width - player.width) player.x += 6;
-
-            drawPlayer();
-            updateBlocks();
-            drawBlocks();
-
-            requestAnimationFrame(gameLoop);
-        }
+        });
 
         document.addEventListener("keydown", event => {
             if (event.code === "ArrowLeft") moveLeft = true;
@@ -230,7 +167,17 @@
             if (event.code === "ArrowRight") moveRight = false;
         });
 
-        saveNameButton.addEventListener("click", savePlayerName);
+        function resetGame() {
+            gameOver = false;
+            blocks = [];
+            score = 0;
+            player.x = canvas.width / 2 - 15;
+            scoreDisplay.textContent = `Score: ${score}`;
+            gameOverScreen.style.display = "none";
+            playerNameInputDiv.style.display = "none";
+            gameLoop();
+        }
+
         loadLeaderboard();
         gameLoop();
     </script>
